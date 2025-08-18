@@ -1,0 +1,16 @@
+name = "cloudflare-graphql-ai-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[dev]
+port = 8787
+
+# Environment variables for development
+# Set these in production using: wrangler secret put OPENAI_API_KEY
+# For development, you can also create a .dev.vars file
+[vars]
+ENVIRONMENT = "development"
+
+# Example .dev.vars file content (create this file and add your keys):
+# OPENAI_API_KEY=your_openai_api_key_here
+# DEEPSEEK_API_KEY=your_deepseek_api_key_here

@@ -1,0 +1,33 @@
+{
+  "name": "cloudflare-graphql-ai-worker",
+  "version": "1.0.0",
+  "description": "A GraphQL API worker for DeepSeek and OpenAI integration on Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "graphql",
+    "deepseek",
+    "openai",
+    "api"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@whatwg-node/fetch": "^0.9.14",
+    "graphql": "^16.8.1",
+    "graphql-yoga": "^5.1.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240129.0",
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.28.2"
+  }
+}
