@@ -2,6 +2,7 @@ import { createYoga, createSchema } from 'graphql-yoga';
 import { typeDefs } from './schema';
 import { deepseekChat } from './resolvers/deepseek';
 import { openaiResponse } from './resolvers/openai';
+import { testGraphQL } from './resolvers/test';
 
 // 定义环境变量接口
 interface Env {
@@ -13,6 +14,14 @@ interface Env {
 // GraphQL resolvers
 const resolvers = {
   Query: {
+    testGraphQL: async (
+      _: any,
+      args: any,
+      context: { env: Env }
+    ) => {
+      return await testGraphQL(args, context.env);
+    },
+    
     deepseekChat: async (
       _: any,
       args: any,

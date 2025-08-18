@@ -21,8 +21,10 @@
   "license": "MIT",
   "dependencies": {
     "@whatwg-node/fetch": "^0.9.14",
+    "dotenv": "^17.2.1",
     "graphql": "^16.8.1",
-    "graphql-yoga": "^5.1.1"
+    "graphql-yoga": "^5.1.1",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240129.0",

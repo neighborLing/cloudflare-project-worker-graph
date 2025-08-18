@@ -2,6 +2,13 @@ import { buildSchema } from 'graphql';
 
 export const typeDefs = `
   type Query {
+    # GraphQL 测试接口
+    testGraphQL(
+      message: String = "Hello GraphQL!"
+      includeTimestamp: Boolean = true
+      echoCount: Int = 1
+    ): TestResponse
+    
     # DeepSeek Chat API
     deepseekChat(
       messages: [MessageInput!]!
@@ -77,6 +84,22 @@ export const typeDefs = `
     prompt_tokens: Int
     completion_tokens: Int
     total_tokens: Int
+  }
+  
+  # GraphQL 测试响应类型
+  type TestResponse {
+    success: Boolean!
+    message: String!
+    timestamp: String
+    echo: [String!]!
+    serverInfo: ServerInfo!
+  }
+  
+  # 服务器信息类型
+  type ServerInfo {
+    environment: String
+    version: String!
+    uptime: String!
   }
 `;
 

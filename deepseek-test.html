@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek API 测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DeepSeek API 测试页面</h1>
+        
+        <form id="apiForm">
+            <div class="form-group">
+                <label for="systemMessage">系统消息:</label>
+                <textarea id="systemMessage" placeholder="设置系统角色和行为">You are a helpful assistant.</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="userMessage">用户消息:</label>
+                <textarea id="userMessage" placeholder="输入你想要测试的消息" required>Hello!</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="model">模型:</label>
+                <input type="text" id="model" value="deepseek-chat" required>
+            </div>
+            
+            <button type="submit" id="submitBtn">发送请求</button>
+        </form>
+        
+        <div id="response"></div>
+    </div>
+
+    <script>
+        document.getElementById('apiForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const systemMessage = document.getElementById('systemMessage').value;
+            const userMessage = document.getElementById('userMessage').value;
+            const model = document.getElementById('model').value;
+            const responseDiv = document.getElementById('response');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // 显示加载状态
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '正在请求 DeepSeek API...';
+            submitBtn.disabled = true;
+            
+            try {
+                const requestBody = {
+                    model: model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemMessage
+                        },
+                        {
+                            role: "user", 
+                            content: userMessage
+                        }
+                    ],
+                    stream: false
+                };
+                
+                console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+                
+                // 通过GraphQL查询DeepSeek API
+                const messages = [
+                    {
+                        role: "system",
+                        content: systemMessage
+                    },
+                    {
+                        role: "user",
+                        content: userMessage
+                    }
+                ];
+                
+                const graphqlQuery = {
+                    query: `
+                        query DeepseekChat($messages: [MessageInput!]!, $model: String!) {
+                            deepseekChat(messages: $messages, model: $model) {
+                                id
+                                object
+                                created
+                                model
+                                choices {
+                                    index
+                                    message {
+                                        role
+                                        content
+                                    }
+                                    finish_reason
+                                }
+                                usage {
+                                    prompt_tokens
+                                    completion_tokens
+                                    total_tokens
+                                }
+                                error
+                            }
+                        }
+                    `,
+                    variables: {
+                        messages: messages,
+                        model: model
+                    }
+                };
+                
+                const response = await fetch('http://localhost:8787/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(graphqlQuery)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.data && data.data.deepseekChat) {
+                    const deepseekResult = data.data.deepseekChat;
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `响应成功！\n\n${JSON.stringify(deepseekResult, null, 2)}`;
+                    
+                    // 如果有助手回复，单独显示
+                    if (deepseekResult.choices && deepseekResult.choices[0] && deepseekResult.choices[0].message) {
+                        const assistantMessage = deepseekResult.choices[0].message.content;
+                        responseDiv.textContent += `\n\n助手回复: ${assistantMessage}`;
+                    }
+                } else {
+                    responseDiv.className = 'response error';
+                    const errorMessage = data.errors ? data.errors.map(e => e.message).join(', ') : 'Unknown error';
+                    responseDiv.textContent = `请求失败！\n\n状态码: ${response.status}\n错误: ${errorMessage}\n完整响应: ${JSON.stringify(data, null, 2)}`;
+                }
+                
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = `网络错误: ${error.message}`;
+                console.error('Error:', error);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

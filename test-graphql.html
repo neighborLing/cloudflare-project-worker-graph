@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphQL API 测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e1e1;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 120px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            resize: vertical;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #545b62;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .quick-tests {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .quick-tests button {
+            font-size: 12px;
+            padding: 8px 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 GraphQL API 测试工具</h1>
+        
+        <!-- 服务器配置 -->
+        <div class="section">
+            <h3>🔧 服务器配置</h3>
+            <div class="form-group">
+                <label for="endpoint">GraphQL 端点:</label>
+                <input type="text" id="endpoint" value="http://localhost:8787/graphql" placeholder="http://localhost:8787/graphql">
+            </div>
+        </div>
+
+        <!-- 测试接口 -->
+        <div class="section">
+            <h3>🧪 测试接口 (testGraphQL)</h3>
+            <div class="form-group">
+                <label for="testMessage">测试消息:</label>
+                <input type="text" id="testMessage" value="Hello GraphQL!" placeholder="输入测试消息">
+            </div>
+            <div class="form-group">
+                <label for="echoCount">回显次数 (1-10):</label>
+                <input type="number" id="echoCount" value="1" min="1" max="10">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="includeTimestamp" checked>
+                    包含时间戳
+                </label>
+            </div>
+            <button onclick="runTestGraphQL()">🧪 测试 GraphQL</button>
+            <div id="testResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- DeepSeek 接口 -->
+        <div class="section">
+            <h3>🤖 DeepSeek 聊天接口</h3>
+            <div class="form-group">
+                <label for="deepseekMessage">聊天消息:</label>
+                <textarea id="deepseekMessage" placeholder="输入你想问的问题...">你好，请介绍一下自己</textarea>
+            </div>
+            <div class="form-group">
+                <label for="deepseekModel">模型:</label>
+                <select id="deepseekModel">
+                    <option value="deepseek-chat">deepseek-chat</option>
+                    <option value="deepseek-coder">deepseek-coder</option>
+                </select>
+            </div>
+            <button onclick="runDeepSeekChat()">💬 发送到 DeepSeek</button>
+            <div id="deepseekResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- OpenAI 接口 -->
+        <div class="section">
+            <h3>🔮 OpenAI 接口</h3>
+            <div class="form-group">
+                <label for="openaiInput">输入内容:</label>
+                <textarea id="openaiInput" placeholder="输入你的问题或内容...">请解释什么是GraphQL</textarea>
+            </div>
+            <div class="form-group">
+                <label for="openaiModel">模型:</label>
+                <select id="openaiModel">
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="gpt-4">gpt-4</option>
+                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                </select>
+            </div>
+            <button onclick="runOpenAI()">🚀 发送到 OpenAI</button>
+            <div id="openaiResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- 自定义 GraphQL 查询 -->
+        <div class="section">
+            <h3>⚡ 自定义 GraphQL 查询</h3>
+            <div class="quick-tests">
+                <button onclick="loadHealthCheck()">健康检查</button>
+                <button onclick="loadTestQuery()">测试查询</button>
+                <button onclick="loadDeepSeekQuery()">DeepSeek 查询</button>
+                <button onclick="loadOpenAIQuery()">OpenAI 查询</button>
+            </div>
+            <div class="form-group">
+                <label for="customQuery">GraphQL 查询:</label>
+                <textarea id="customQuery" placeholder="输入你的 GraphQL 查询...">query {
+  testGraphQL {
+    success
+    message
+    timestamp
+    echo
+    serverInfo {
+      environment
+      version
+      uptime
+    }
+  }
+}</textarea>
+            </div>
+            <button onclick="runCustomQuery()">🎯 执行查询</button>
+            <button class="secondary" onclick="clearResponse()">🧹 清空结果</button>
+            <div id="customResponse" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 执行 GraphQL 请求
+        async function executeGraphQL(query, variables = {}) {
+            const endpoint = document.getElementById('endpoint').value;
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        variables: variables
+                    })
+                });
+
+                const data = await response.json();
+                return { success: true, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // 显示响应结果
+        function displayResponse(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'response success';
+                element.textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                element.className = 'response error';
+                element.textContent = `错误: ${result.error}`;
+            }
+        }
+
+        // 测试 GraphQL 接口
+        async function runTestGraphQL() {
+            const message = document.getElementById('testMessage').value;
+            const echoCount = parseInt(document.getElementById('echoCount').value);
+            const includeTimestamp = document.getElementById('includeTimestamp').checked;
+
+            const query = `
+                query TestGraphQL($message: String, $echoCount: Int, $includeTimestamp: Boolean) {
+                    testGraphQL(message: $message, echoCount: $echoCount, includeTimestamp: $includeTimestamp) {
+                        success
+                        message
+                        timestamp
+                        echo
+                        serverInfo {
+                            environment
+                            version
+                            uptime
+                        }
+                    }
+                }
+            `;
+
+            const variables = { message, echoCount, includeTimestamp };
+            const result = await executeGraphQL(query, variables);
+            displayResponse('testResponse', result);
+        }
+
+        // DeepSeek 聊天
+        async function runDeepSeekChat() {
+            const message = document.getElementById('deepseekMessage').value;
+            const model = document.getElementById('deepseekModel').value;
+
+            const query = `
+                query DeepSeekChat($messages: [MessageInput!]!, $model: String) {
+                    deepseekChat(messages: $messages, model: $model) {
+                        id
+                        object
+                        created
+                        model
+                        choices {
+                            index
+                            message {
+                                role
+                                content
+                            }
+                            finish_reason
+                        }
+                        usage {
+                            prompt_tokens
+                            completion_tokens
+                            total_tokens
+                        }
+                        error
+                    }
+                }
+            `;
+
+            const variables = {
+                messages: [{ role: "user", content: message }],
+                model: model
+            };
+
+            const result = await executeGraphQL(query, variables);
+            displayResponse('deepseekResponse', result);
+        }
+
+        // OpenAI 请求
+        async function runOpenAI() {
+            const input = document.getElementById('openaiInput').value;
+            const model = document.getElementById('openaiModel').value;
+
+            const query = `
+                query OpenAIResponse($input: String, $model: String) {
+                    openaiResponse(input: $input, model: $model) {
+                        id
+                        object
+                        created
+                        model
+                        choices {
+                            index
+                            message {
+                                role
+                                content
+                            }
+                            finish_reason
+                        }
+                        usage {
+                            prompt_tokens
+                            completion_tokens
+                            total_tokens
+                        }
+                        error
+                    }
+                }
+            `;
+
+            const variables = { input, model };
+            const result = await executeGraphQL(query, variables);
+            displayResponse('openaiResponse', result);
+        }
+
+        // 执行自定义查询
+        async function runCustomQuery() {
+            const query = document.getElementById('customQuery').value;
+            const result = await executeGraphQL(query);
+            displayResponse('customResponse', result);
+        }
+
+        // 加载预设查询
+        function loadHealthCheck() {
+            document.getElementById('customQuery').value = `query {
+  testGraphQL {
+    success
+    message
+    timestamp
+    serverInfo {
+      environment
+      version
+      uptime
+    }
+  }
+}`;
+        }
+
+        function loadTestQuery() {
+            document.getElementById('customQuery').value = `query {
+  testGraphQL(message: "完整测试", echoCount: 3, includeTimestamp: true) {
+    success
+    message
+    timestamp
+    echo
+    serverInfo {
+      environment
+      version
+      uptime
+    }
+  }
+}`;
+        }
+
+        function loadDeepSeekQuery() {
+            document.getElementById('customQuery').value = `query {
+  deepseekChat(messages: [{role: "user", content: "你是谁？"}]) {
+    choices {
+      message {
+        role
+        content
+      }
+    }
+    usage {
+      total_tokens
+    }
+  }
+}`;
+        }
+
+        function loadOpenAIQuery() {
+            document.getElementById('customQuery').value = `query {
+  openaiResponse(input: "什么是人工智能？", model: "gpt-4o") {
+    choices {
+      message {
+        role
+        content
+      }
+    }
+    usage {
+      total_tokens
+    }
+  }
+}`;
+        }
+
+        // 清空结果
+        function clearResponse() {
+            const responses = document.querySelectorAll('.response');
+            responses.forEach(response => {
+                response.style.display = 'none';
+                response.textContent = '';
+            });
+        }
+
+        // 页面加载完成后检查健康状态
+        window.addEventListener('load', async function() {
+            const endpoint = document.getElementById('endpoint').value;
+            try {
+                const healthResponse = await fetch(endpoint.replace('/graphql', '/health'));
+                if (healthResponse.ok) {
+                    console.log('✅ GraphQL 服务器运行正常');
+                } else {
+                    console.log('⚠️ GraphQL 服务器可能未启动');
+                }
+            } catch (error) {
+                console.log('❌ 无法连接到 GraphQL 服务器:', error.message);
+            }
+        });
+    </script>
+</body>
+</html>

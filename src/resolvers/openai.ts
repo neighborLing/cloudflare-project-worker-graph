@@ -1,4 +1,5 @@
 interface OpenAIMessage {
+  // developer 角色在 Responses API 中等价于系统指令；也可使用 "system"
   role: 'developer' | 'user' | 'assistant';
   content: string;
 }
@@ -62,30 +63,50 @@ export async function openaiResponse(
       };
     }
 
-    let { model = 'gpt-4o', input, messages, reasoning = { effort: 'low' } } = args;
-    
-    // Handle different input formats
-    let formattedInput: OpenAIMessage[];
-    if (messages) {
-      // Use messages array if provided
-      formattedInput = messages;
-    } else if (input) {
-      // Convert string input to message format
-      formattedInput = [{ role: 'user', content: input }];
+    const {
+      model = 'gpt-4o-mini', // ✅ 换用 Responses API 推荐/可用模型
+      input,
+      messages,
+      // reasoning = { effort: 'low' },
+    } = args;
+
+    // 统一整理为 Responses API 的 input 数组
+    let inputArray:
+      | string
+      | Array<{
+          role: 'developer' | 'user' | 'assistant';
+          content: Array<{ type: 'input_text'; text: string }>;
+        }>;
+
+    if (messages && messages.length) {
+      inputArray = messages.map((m) => ({
+        role: m.role,
+        content: [{ type: 'input_text', text: m.content }], // ✅ 每条消息必须是"内容块数组"
+      }));
+    } else if (typeof input === 'string') {
+      // 单条字符串也可直接作为 input
+      inputArray = input;
     } else {
-      // No input provided
-      return {
-        id: undefined,
-        object: undefined,
-        created: undefined,
-        model: undefined,
-        choices: undefined,
-        usage: undefined,
-        error: 'Either input or messages parameter is required'
-      };
+      return { error: 'Either input or messages parameter is required' };
     }
+
+    const requestBody = {
+      model,
+      input: inputArray,
+      // reasoning,           // ✅ Responses API 支持 reasoning 参数
+      // max_output_tokens: 1024, // 可选，避免过长输出
+    };
     
-    console.log('OpenAI API Request:', { model, input: formattedInput, reasoning, key: env.OPENAI_API_KEY });
+    console.log('=== OpenAI API Request Debug Info ===');
+    console.log('URL:', 'https://api.openai.com/v1/responses');
+    console.log('Method:', 'POST');
+    console.log('Headers:', {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.OPENAI_API_KEY.substring(0, 10)}...${env.OPENAI_API_KEY.slice(-4)}`
+    });
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+    console.log('Request Body Size:', JSON.stringify(requestBody).length, 'bytes');
+    console.log('=====================================');
 
     // 使用OpenAI Responses API
     const response = await fetch('https://api.openai.com/v1/responses', {
@@ -94,79 +115,73 @@ export async function openaiResponse(
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${env.OPENAI_API_KEY}`
       },
-      body: JSON.stringify({
-        model,
-        // reasoning,
-        input: formattedInput
-      })
+      body: JSON.stringify(requestBody)
     });
 
-    console.log('OpenAI API Response Status:', response.status, response.statusText);
+    console.log('=== OpenAI API Response Debug Info ===');
+    console.log('Status Code:', response.status);
+    console.log('Status Text:', response.statusText);
+    console.log('Response Headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Response OK:', response.ok);
+    console.log('Response URL:', response.url);
+    console.log('Response Type:', response.type);
+    console.log('======================================');
 
+    // 非 2xx：读取文本并返回结构化错误
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API Error Response:', errorText);
+      const errText = await response.text().catch(() => '');
       return {
-        id: undefined,
-        object: undefined,
-        created: undefined,
-        model: undefined,
-        choices: undefined,
-        usage: undefined,
-        error: `OpenAI API Error: ${response.status} - ${errorText}`
+        error: `OpenAI API Error: ${response.status} ${response.statusText} - ${errText}`,
       };
     }
 
-    const data = await response.json() as any;
-    console.log('OpenAI API Response Data:', JSON.stringify(data, null, 2));
-    
-    // 检查是否是新版本API响应格式
-    if (data.output && Array.isArray(data.output)) {
-      // 新版本API格式，转换为标准格式
-      const messageOutput = data.output.find((item: any) => item.type === 'message');
-      const textContent = messageOutput?.content?.find((item: any) => item.type === 'output_text');
-      
-      return {
-        id: data.id,
-        object: data.object || 'chat.completion',
-        created: data.created_at || Math.floor(Date.now() / 1000),
-        model: data.model,
-        choices: [{
-          index: 0,
-          message: {
-            role: 'assistant',
-            content: textContent?.text || ''
-          },
-          finish_reason: data.status === 'completed' ? 'stop' : 'length'
-        }],
-        usage: {
-          prompt_tokens: data.usage?.input_tokens || 0,
-          completion_tokens: data.usage?.output_tokens || 0,
-          total_tokens: data.usage?.total_tokens || 0
-        }
-      };
-    } else {
-      // 标准的OpenAI API响应格式
-      return {
-        id: data.id,
-        object: data.object,
-        created: data.created,
-        model: data.model,
-        choices: data.choices,
-        usage: data.usage
-      };
+    const raw = await response.text();
+    let data: any;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return { error: `Failed to parse OpenAI response: ${(e as Error).message}` };
     }
+
+    // 兼容两种返回：优先 output_text（如果存在）
+    const outputText =
+      typeof data.output_text === 'string' && data.output_text.length
+        ? data.output_text
+        : (() => {
+            const msg = (data.output || []).find((it: any) => it.type === 'message');
+            const txt = msg?.content?.find((c: any) => c.type === 'output_text')?.text;
+            return txt || '';
+          })();
+
+    // 统一回传成"choices"形状，兼容你现有的调用方
+    return {
+      id: data.id,
+      object: data.object || 'chat.completion',
+      created: data.created ?? Math.floor(Date.now() / 1000),
+      model: data.model || model,
+      choices: [
+        {
+          index: 0,
+          message: { role: 'assistant', content: outputText },
+          finish_reason: data.status === 'completed' ? 'stop' : 'length',
+        },
+      ],
+      usage: {
+        prompt_tokens: data.usage?.input_tokens ?? 0,
+        completion_tokens: data.usage?.output_tokens ?? 0,
+        total_tokens: data.usage?.total_tokens ?? 0,
+      },
+      // 也把原始 output 带回去以便调试
+      status: data.status,
+      output: data.output,
+    };
 
   } catch (error) {
-    console.error('OpenAI API Error:', error);
     return {
-      id: undefined,
-      object: undefined,
-      created: undefined,
-      model: undefined,
-      choices: undefined,
-      usage: undefined,
-      error: `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      error:
+        error instanceof Error
+          ? `Request failed: ${error.message}`
+          : `Request failed: ${String(error)}`,
     };
   }
 }
