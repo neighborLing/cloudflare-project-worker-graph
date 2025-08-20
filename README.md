@@ -42,10 +42,10 @@ wrangler secret put DEEPSEEK_API_KEY
 ### 1. wrangler.toml 路由配置
 ```toml
 [[routes]]
-pattern = "meadery.win/api/*"
+pattern = "meadery.win/api*"
 zone_name = "meadery.win"
 ```
-**用途**: 将自定义域名 `meadery.win/api/*` 的所有请求路由到此 Worker
+**用途**: 将自定义域名 `meadery.win/api*` 的所有请求路由到此 Worker
 
 ### 2. GraphQL 端点配置
 在 `src/index.ts` 中设置：
