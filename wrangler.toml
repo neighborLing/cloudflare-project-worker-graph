@@ -1,4 +1,4 @@
-name = "cloudflare-graphql-ai-worker"
+name = "cloudflare-project-worker-graph"
 main = "src/index.ts"
 compatibility_date = "2024-08-20"
 
