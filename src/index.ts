@@ -73,7 +73,7 @@ export default {
     try {
       // 健康检查端点
       const url = new URL(request.url);
-      if (url.pathname === '/health') {
+      if (url.pathname === '/api/health') {
         return new Response(JSON.stringify({ 
           status: 'ok', 
           timestamp: new Date().toISOString(),

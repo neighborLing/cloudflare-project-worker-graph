@@ -1,5 +1,5 @@
 {
-  "name": "cloudflare-graphql-ai-worker",
+  "name": "cloudflare-project-worker-graph",
   "version": "1.0.0",
   "description": "A GraphQL API worker for DeepSeek and OpenAI integration on Cloudflare Workers",
   "main": "src/index.ts",
