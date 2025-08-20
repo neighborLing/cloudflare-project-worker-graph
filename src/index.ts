@@ -49,6 +49,8 @@ const schema = createSchema({
 // 创建 GraphQL Yoga 实例
 const yoga = createYoga({
   schema,
+  // 设置 GraphQL 端点路径
+  graphqlEndpoint: '/api',
   // 启用 GraphQL Playground (开发环境)
   graphiql: true,
   // CORS 配置
