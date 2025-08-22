@@ -9,7 +9,7 @@ port = 8787
 # Set these in production using: wrangler secret put OPENAI_API_KEY
 # For development, you can also create a .dev.vars file
 [[routes]]
-pattern = "meadery.win/graph*"
+pattern = "meadery.win/graphql*"
 zone_name = "meadery.win"
 
 [env.development]
