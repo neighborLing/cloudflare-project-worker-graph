@@ -19,7 +19,7 @@ export async function weatherAgent(
 
     // 发送请求到天气代理服务
     // 尝试使用绝对 URL 和适当的 headers
-    const response = await fetch('https://mastra.meadery.win/api/agents/weatherAgent/generate', {
+    const response = await fetch('https://meadery.win/api/agents/weatherAgent/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
