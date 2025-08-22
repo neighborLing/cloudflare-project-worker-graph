@@ -18,7 +18,8 @@ export async function weatherAgent(
     };
 
     // 发送请求到天气代理服务
-    const response = await fetch('https://meadery.win/api/agents/weatherAgent/generate', {
+    // 尝试使用绝对 URL 和适当的 headers
+    const response = await fetch('https://cloudflare-mastra.799638965meadery.workers.dev/api/agents/weatherAgent/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +28,13 @@ export async function weatherAgent(
     });
 
     if (!response.ok) {
-      throw new Error(`Weather Agent API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      // 返回更详细的错误信息
+      return {
+        success: false,
+        response: null,
+        error: `Weather Agent API error: ${response.status} ${response.statusText}. Response: ${errorText}`
+      };
     }
 
     const data = await response.json() as any;
@@ -35,11 +42,10 @@ export async function weatherAgent(
     // 返回完整的响应数据
     return {
       success: true,
-      response: data.response || data,
+      response: data,
       error: null
     };
   } catch (error) {
-    console.error('Weather Agent API error:', error);
     return {
       success: false,
       response: null,
