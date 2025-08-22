@@ -25,6 +25,13 @@ export const typeDefs = `
       messages: [OpenAIMessageInput!]
       reasoning: ReasoningInput
     ): OpenAIResponse
+    
+    # Weather Agent API
+    weatherAgent(
+      messages: [MessageInput!]!
+      runId: String = "weatherAgent"
+      runtimeContext: String
+    ): WeatherAgentResponse
   }
   
   # 消息输入类型
@@ -100,6 +107,48 @@ export const typeDefs = `
     environment: String
     version: String!
     uptime: String!
+  }
+  
+  # Weather Agent 响应类型
+  type WeatherAgentResponse {
+    success: Boolean!
+    response: WeatherAgentData
+    error: String
+  }
+  
+  # Weather Agent 数据类型
+  type WeatherAgentData {
+    id: String
+    timestamp: String
+    modelId: String
+    headers: String
+    body: WeatherAgentBody
+    messages: [WeatherAgentMessage]
+  }
+  
+  # Weather Agent Body 类型
+  type WeatherAgentBody {
+    id: String
+    object: String
+    created: Int
+    model: String
+    choices: [Choice]
+    usage: Usage
+    service_tier: String
+    system_fingerprint: String
+  }
+  
+  # Weather Agent Message 类型
+  type WeatherAgentMessage {
+    role: String
+    content: [WeatherAgentContent]
+    id: String
+  }
+  
+  # Weather Agent Content 类型
+  type WeatherAgentContent {
+    type: String
+    text: String
   }
 `;
 

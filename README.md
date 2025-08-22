@@ -42,25 +42,25 @@ wrangler secret put DEEPSEEK_API_KEY
 ### 1. wrangler.toml 路由配置
 ```toml
 [[routes]]
-pattern = "meadery.win/api*"
+pattern = "meadery.win/graph*"
 zone_name = "meadery.win"
 ```
-**用途**: 将自定义域名 `meadery.win/api*` 的所有请求路由到此 Worker
+**用途**: 将自定义域名 `meadery.win/graph*` 的所有请求路由到此 Worker
 
 ### 2. GraphQL 端点配置
 在 `src/index.ts` 中设置：
 ```typescript
 const yoga = createYoga({
   // 设置 GraphQL 端点路径
-  graphqlEndpoint: '/api',
+  graphqlEndpoint: '/graph',
   // ... 其他配置
 });
 ```
-**用途**: 将 GraphQL 服务端点设置为 `/api`，配合路由实现 `meadery.win/api` 访问
+**用途**: 将 GraphQL 服务端点设置为 `/graph`，配合路由实现 `meadery.win/graph` 访问
 
 ### 访问方式
-- GraphQL API: `https://meadery.win/api`
-- GraphQL Playground: `https://meadery.win/api`（浏览器访问）
+- GraphQL API: `https://meadery.win/graph`
+- GraphQL Playground: `https://meadery.win/graph`（浏览器访问）
 
 ## 部署步骤
 

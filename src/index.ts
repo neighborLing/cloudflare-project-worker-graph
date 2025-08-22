@@ -3,6 +3,7 @@ import { typeDefs } from './schema';
 import { deepseekChat } from './resolvers/deepseek';
 import { openaiResponse } from './resolvers/openai';
 import { testGraphQL } from './resolvers/test';
+import { weatherAgent } from './resolvers/weatherAgent';
 
 // 定义环境变量接口
 interface Env {
@@ -37,6 +38,14 @@ const resolvers = {
     ) => {
       return await openaiResponse(args, context.env);
     },
+    
+    weatherAgent: async (
+      _: any,
+      args: any,
+      context: { env: Env }
+    ) => {
+      return await weatherAgent(args, context.env);
+    },
   },
 };
 
@@ -50,7 +59,7 @@ const schema = createSchema({
 const yoga = createYoga({
   schema,
   // 设置 GraphQL 端点路径
-  graphqlEndpoint: '/api',
+  graphqlEndpoint: '/graph',
   // 启用 GraphQL Playground (开发环境)
   graphiql: true,
   // CORS 配置
@@ -73,7 +82,7 @@ export default {
     try {
       // 健康检查端点
       const url = new URL(request.url);
-      if (url.pathname === '/api/health') {
+      if (url.pathname === '/graph/health') {
         return new Response(JSON.stringify({ 
           status: 'ok', 
           timestamp: new Date().toISOString(),
