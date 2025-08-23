@@ -4,6 +4,7 @@ import { deepseekChat } from './resolvers/deepseek';
 import { openaiResponse } from './resolvers/openai';
 import { testGraphQL } from './resolvers/test';
 import { weatherAgent } from './resolvers/weatherAgent';
+import { customRoute } from './resolvers/customRoute';
 
 // 定义环境变量接口
 interface Env {
@@ -45,6 +46,14 @@ const resolvers = {
       context: { env: Env }
     ) => {
       return await weatherAgent(args, context.env);
+    },
+    
+    customRoute: async (
+      _: any,
+      args: any,
+      context: { env: Env }
+    ) => {
+      return await customRoute(args, context.env);
     },
   },
 };

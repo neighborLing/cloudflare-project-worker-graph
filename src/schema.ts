@@ -32,6 +32,9 @@ export const typeDefs = `
       runId: String = "weatherAgent"
       runtimeContext: String
     ): WeatherAgentResponse
+    
+    # Custom Route API
+    customRoute: CustomRouteResponse
   }
   
   # 消息输入类型
@@ -149,6 +152,18 @@ export const typeDefs = `
   type WeatherAgentContent {
     type: String
     text: String
+  }
+  
+  # Custom Route 响应类型
+  type CustomRouteResponse {
+    success: Boolean!
+    data: CustomRouteData
+    error: String
+  }
+  
+  # Custom Route 数据类型
+  type CustomRouteData {
+    message: String
   }
 `;
 
